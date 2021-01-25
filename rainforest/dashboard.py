@@ -34,7 +34,7 @@ async def display_main_page(q):
         q.page['header'] = ui.header_card(
             box='1 1 4 1',
             title='Rainforest Connection Species Audio Detection',
-            subtitle='Annotate bird and frog species in a tropical soundscapes',
+            subtitle='Annotate bird and frog species in tropical soundscapes',
             icon='MusicInCollectionFill',
             icon_color='yellow',
         )
