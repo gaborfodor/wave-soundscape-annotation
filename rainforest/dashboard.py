@@ -86,14 +86,14 @@ async def display_main_page(q):
     if q.client.current_hash == 'annotate':
         await del_cards(q, CARDS['references'])
         q.page['species_selector'] = ui.form_card(
-            box='7 1 1 1', items=[
-                ui.dropdown(name='spec_id', label='', value=q.client.spec_id, required=True, trigger=True,
+            box='5 2 1 1', items=[
+                ui.dropdown(name='spec_id', tooltip='Species', value=q.client.spec_id, trigger=True,
                             choices=[ui.choice(name=f'{s}', label=f'{s}') for s in range(N_SPECIES)])
             ]
         )
         q.page['method_selector'] = ui.form_card(
-            box='8 1 1 1', items=[
-                ui.dropdown(name='method', label='', value=q.client.method, required=True, trigger=True,
+            box='6 2 1 1', items=[
+                ui.dropdown(name='method', tooltip='Order', value=q.client.method, trigger=True,
                             choices=[
                                 ui.choice(name='top', label='Likely'),
                                 ui.choice(name='random', label='Random'),
@@ -102,8 +102,8 @@ async def display_main_page(q):
             ]
         )
         q.page['tp_selector'] = ui.form_card(
-            box='9 1 1 1', items=[
-                ui.dropdown(name='tp_selector', label='', value=q.client.tp_selector, required=True, trigger=True,
+            box='7 2 1 1', items=[
+                ui.dropdown(name='tp_selector', tooltip='Predicted', value=q.client.tp_selector, trigger=True,
                             choices=[
                                 ui.choice(name='TP', label='Positive'),
                                 ui.choice(name='FP', label='Negative'),
