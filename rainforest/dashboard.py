@@ -69,6 +69,9 @@ async def display_main_page(q):
         print(q.client.rec_id, q.client.start, q.client.prob, q.client.spec_id, 'False')
     if q.args.na_button:
         print(q.client.rec_id, q.client.start, q.client.prob, q.client.spec_id, 'NA')
+    if q.args.refresh_button:
+        q.client.pos_rec_id, q.client.pos_start, q.client.pos_prob = get_random_positive_example(q.client.spec_id)
+        q.client.neg_rec_id, q.client.neg_start, q.client.neg_prob = get_random_negative_example(q.client.spec_id)
 
     if q.args['#']:
         print(q.client.current_hash, '->', q.args['#'])
@@ -113,6 +116,7 @@ async def display_main_page(q):
                     ui.button(name='true_button', label='True', primary=True),
                     ui.button(name='false_button', label='False'),
                     ui.button(name='na_button', label='Not sure...', ),
+                    ui.button(name='refresh_button', label='Refresh confirmed examples', ),
                 ])
             ]
 
