@@ -2,7 +2,7 @@ from h2o_wave import ui, Q, app, main
 
 from rainforest.config import N_SPECIES
 from rainforest.utils import show_references, get_candidates, get_annotations, visualize_spectograms, \
-    get_next_candidate, fig_to_img
+    get_next_candidate, fig_to_img, get_random_positive_example, get_random_negative_example
 
 _ = main
 
@@ -50,8 +50,11 @@ async def display_main_page(q):
                 ui.tab(name='#references', label='References'),
             ]
         )
-        q.client.recording_id, q.client.start, q.client.probability = get_next_candidate(
+        q.client.rec_id, q.client.start, q.client.prob = get_next_candidate(
             q.client.candidates, q.client.spec_id, q.client.method, q.client.tp_selector)
+
+        q.client.pos_rec_id, q.client.pos_start, q.client.pos_prob = get_random_positive_example(q.client.spec_id)
+        q.client.neg_rec_id, q.client.neg_start, q.client.neg_prob = get_random_negative_example(q.client.spec_id)
 
     if q.args.spec_id:
         q.client.spec_id = q.args.spec_id
@@ -59,6 +62,13 @@ async def display_main_page(q):
         q.client.method = q.args.method
     if q.args.tp_selector:
         q.client.tp_selector = q.args.tp_selector
+
+    if q.args.true_button:
+        print(q.client.rec_id, q.client.start, q.client.prob, q.client.spec_id, 'True')
+    if q.args.false_button:
+        print(q.client.rec_id, q.client.start, q.client.prob, q.client.spec_id, 'False')
+    if q.args.na_button:
+        print(q.client.rec_id, q.client.start, q.client.prob, q.client.spec_id, 'NA')
 
     if q.args['#']:
         print(q.client.current_hash, '->', q.args['#'])
@@ -112,19 +122,19 @@ async def display_main_page(q):
             box=f'1 3 4 10',
             title='Example to check',
             type='png',
-            image=fig_to_img(visualize_spectograms(q.client.recording_id, q.client.spec_id, q.client.start,
-                                                   q.client.probability)))
+            image=fig_to_img(visualize_spectograms(q.client.rec_id, q.client.spec_id, q.client.start,
+                                                   q.client.prob)))
 
         q.page['example_tp'] = ui.image_card(
             box=f'5 3 4 10',
             title='Confirmed positive example',
             type='png',
-            image=fig_to_img(visualize_spectograms(q.client.recording_id, q.client.spec_id, q.client.start,
-                                                   q.client.probability)))
+            image=fig_to_img(visualize_spectograms(q.client.pos_rec_id, q.client.spec_id, q.client.pos_start,
+                                                   q.client.pos_prob)))
 
         q.page['example_fp'] = ui.image_card(
             box=f'9 3 4 10',
             title='Confirmed negative example',
             type='png',
-            image=fig_to_img(visualize_spectograms(q.client.recording_id, q.client.spec_id, q.client.start,
-                                                   q.client.probability)))
+            image=fig_to_img(visualize_spectograms(q.client.neg_rec_id, q.client.spec_id, q.client.neg_start,
+                                                   q.client.neg_prob)))
