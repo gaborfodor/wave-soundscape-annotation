@@ -1,13 +1,14 @@
 from h2o_wave import ui, Q, app, main
 
 from rainforest.config import N_SPECIES
-from rainforest.utils import show_references
+from rainforest.utils import show_references, get_candidates, get_annotations, visualize_spectograms, \
+    get_next_candidate, fig_to_img
 
 _ = main
 
 CARDS = {
     'references': ['references'],
-    'annotate': ['species_selector', 'method_selector'],
+    'annotate': ['species_selector', 'method_selector', 'tp_selector', 'buttons', 'new', 'example_tp', 'example_fp'],
 }
 
 
@@ -28,8 +29,12 @@ async def del_cards(q: Q, cards):
 async def display_main_page(q):
     if not q.client.initialized:
         q.client.initialized = True
-        q.user.spec_id = 's0'
-        q.user.method = 'top'
+        q.client.spec_id = '0'
+        q.client.method = 'top'
+        q.client.tp_selector = 'TP'
+
+        q.client.annotations = get_annotations()
+        q.client.candidates = get_candidates()
 
         q.page['header'] = ui.header_card(
             box='1 1 4 1',
@@ -45,11 +50,15 @@ async def display_main_page(q):
                 ui.tab(name='#references', label='References'),
             ]
         )
+        q.client.recording_id, q.client.start, q.client.probability = get_next_candidate(
+            q.client.candidates, q.client.spec_id, q.client.method, q.client.tp_selector)
 
     if q.args.spec_id:
         q.client.spec_id = q.args.spec_id
     if q.args.method:
         q.client.method = q.args.method
+    if q.args.tp_selector:
+        q.client.tp_selector = q.args.tp_selector
 
     if q.args['#']:
         print(q.client.current_hash, '->', q.args['#'])
@@ -65,13 +74,13 @@ async def display_main_page(q):
         await del_cards(q, CARDS['references'])
         q.page['species_selector'] = ui.form_card(
             box='7 1 1 1', items=[
-                ui.dropdown(name='spec_id', label='', value=q.user.spec_id, required=True, trigger=True,
-                            choices=[ui.choice(name=f's{s}', label=f'{s}') for s in range(N_SPECIES)])
+                ui.dropdown(name='spec_id', label='', value=q.client.spec_id, required=True, trigger=True,
+                            choices=[ui.choice(name=f'{s}', label=f'{s}') for s in range(N_SPECIES)])
             ]
         )
         q.page['method_selector'] = ui.form_card(
             box='8 1 1 1', items=[
-                ui.dropdown(name='method', label='', value=q.user.method, required=True, trigger=True,
+                ui.dropdown(name='method', label='', value=q.client.method, required=True, trigger=True,
                             choices=[
                                 ui.choice(name='top', label='Likely'),
                                 ui.choice(name='random', label='Random'),
@@ -79,3 +88,43 @@ async def display_main_page(q):
                             ])
             ]
         )
+        q.page['tp_selector'] = ui.form_card(
+            box='9 1 1 1', items=[
+                ui.dropdown(name='tp_selector', label='', value=q.client.tp_selector, required=True, trigger=True,
+                            choices=[
+                                ui.choice(name='TP', label='Positive'),
+                                ui.choice(name='FP', label='Negative'),
+                            ])
+            ]
+        )
+        q.page['buttons'] = ui.form_card(
+            box='1 2 4 1', items=[
+                ui.buttons([
+                    ui.button(name='true_button', label='True', primary=True),
+                    ui.button(name='false_button', label='False'),
+                    ui.button(name='na_button', label='Not sure...', ),
+                ])
+            ]
+
+        )
+
+        q.page['new'] = ui.image_card(
+            box=f'1 3 4 10',
+            title='Example to check',
+            type='png',
+            image=fig_to_img(visualize_spectograms(q.client.recording_id, q.client.spec_id, q.client.start,
+                                                   q.client.probability)))
+
+        q.page['example_tp'] = ui.image_card(
+            box=f'5 3 4 10',
+            title='Confirmed positive example',
+            type='png',
+            image=fig_to_img(visualize_spectograms(q.client.recording_id, q.client.spec_id, q.client.start,
+                                                   q.client.probability)))
+
+        q.page['example_fp'] = ui.image_card(
+            box=f'9 3 4 10',
+            title='Confirmed negative example',
+            type='png',
+            image=fig_to_img(visualize_spectograms(q.client.recording_id, q.client.spec_id, q.client.start,
+                                                   q.client.probability)))
