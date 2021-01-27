@@ -88,7 +88,7 @@ def fig_to_img(fig):
     return image
 
 
-def visualize_spectograms(recording_id, spec_id, start, p):
+def visualize_spectograms(recording_id, spec_id, start, p, show_boxes=True):
     original_tp = get_original_tp()
     original_fp = get_original_fp()
     mel_freqs = librosa.mel_frequencies(n_mels=N_MELS, fmin=FMIN, fmax=FMAX).round(0)
@@ -104,24 +104,25 @@ def visualize_spectograms(recording_id, spec_id, start, p):
     ax.set_xlabel('')
 
     # Show original annotations
-    for _, row in original_tp[(original_tp.recording_id == recording_id)].iterrows():
-        tmin = row['t_min']
-        fmin = row['f_min']
-        tmax = row['t_max']
-        fmax = row['f_max']
-        rect = patches.Rectangle(
-            (tmin - start, fmin), tmax - tmin, fmax - fmin,
-            linewidth=3, edgecolor='y', facecolor='none')
-        ax.add_patch(rect)
-    for _, row in original_fp[(original_fp.recording_id == recording_id)].iterrows():
-        tmin = row['t_min']
-        fmin = row['f_min']
-        tmax = row['t_max']
-        fmax = row['f_max']
-        rect = patches.Rectangle(
-            (tmin - start, fmin), tmax - tmin, fmax - fmin,
-            linewidth=3, edgecolor='r', facecolor='none')
-        ax.add_patch(rect)
+    if show_boxes:
+        for _, row in original_tp[(original_tp.recording_id == recording_id)].iterrows():
+            tmin = row['t_min']
+            fmin = row['f_min']
+            tmax = row['t_max']
+            fmax = row['f_max']
+            rect = patches.Rectangle(
+                (tmin - start, fmin), tmax - tmin, fmax - fmin,
+                linewidth=3, edgecolor='y', facecolor='none')
+            ax.add_patch(rect)
+        for _, row in original_fp[(original_fp.recording_id == recording_id)].iterrows():
+            tmin = row['t_min']
+            fmin = row['f_min']
+            tmax = row['t_max']
+            fmax = row['f_max']
+            rect = patches.Rectangle(
+                (tmin - start, fmin), tmax - tmin, fmax - fmin,
+                linewidth=3, edgecolor='r', facecolor='none')
+            ax.add_patch(rect)
     title = f'{recording_id} {spec_id} {p:.3} [{start}-{start + CHUNK_SIZE}]'
     ax.set_ylim(SPEC_FRANGE[spec_id])
     ax.grid()

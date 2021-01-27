@@ -26,11 +26,24 @@ async def del_cards(q: Q, cards):
     await q.page.save()
 
 
+def select_new_candidate(q):
+    q.client.rec_id, q.client.start, q.client.prob = get_next_candidate(
+        q.client.candidates, q.client.spec_id, q.client.method, q.client.tp_selector)
+    print('New candidate')
+
+
+def refresh_original_examples(q):
+    q.client.pos_rec_id, q.client.pos_start, q.client.pos_prob = get_random_positive_example(q.client.spec_id)
+    q.client.neg_rec_id, q.client.neg_start, q.client.neg_prob = get_random_negative_example(q.client.spec_id)
+    print('Refresh')
+
+
 async def display_main_page(q):
     if not q.client.initialized:
         q.client.initialized = True
+        q.client.current_hash = 'annotate'
         q.client.spec_id = '0'
-        q.client.method = 'top'
+        q.client.method = 'random'
         q.client.tp_selector = 'TP'
 
         q.client.annotations = get_annotations()
@@ -52,26 +65,38 @@ async def display_main_page(q):
         )
         q.client.rec_id, q.client.start, q.client.prob = get_next_candidate(
             q.client.candidates, q.client.spec_id, q.client.method, q.client.tp_selector)
-
         q.client.pos_rec_id, q.client.pos_start, q.client.pos_prob = get_random_positive_example(q.client.spec_id)
         q.client.neg_rec_id, q.client.neg_start, q.client.neg_prob = get_random_negative_example(q.client.spec_id)
-
-    if q.args.spec_id:
-        q.client.spec_id = q.args.spec_id
-    if q.args.method:
-        q.client.method = q.args.method
-    if q.args.tp_selector:
-        q.client.tp_selector = q.args.tp_selector
+        print('Init')
 
     if q.args.true_button:
+        print('A')
         print(q.client.rec_id, q.client.start, q.client.prob, q.client.spec_id, 'True')
-    if q.args.false_button:
+        select_new_candidate(q)
+    elif q.args.false_button:
+        print('B')
         print(q.client.rec_id, q.client.start, q.client.prob, q.client.spec_id, 'False')
-    if q.args.na_button:
+        select_new_candidate(q)
+    elif q.args.na_button:
+        print('C')
         print(q.client.rec_id, q.client.start, q.client.prob, q.client.spec_id, 'NA')
-    if q.args.refresh_button:
-        q.client.pos_rec_id, q.client.pos_start, q.client.pos_prob = get_random_positive_example(q.client.spec_id)
-        q.client.neg_rec_id, q.client.neg_start, q.client.neg_prob = get_random_negative_example(q.client.spec_id)
+        select_new_candidate(q)
+    elif q.args.refresh_button:
+        print('D')
+        refresh_original_examples(q)
+    elif q.args.spec_id:
+        print('SPEC')
+        q.client.spec_id = q.args.spec_id
+        select_new_candidate(q)
+        refresh_original_examples(q)
+    elif q.args.method:
+        print('M')
+        q.client.method = q.args.method
+        select_new_candidate(q)
+    elif q.args.tp_selector:
+        print('TP')
+        q.client.tp_selector = q.args.tp_selector
+        select_new_candidate(q)
 
     if q.args['#']:
         print(q.client.current_hash, '->', q.args['#'])
@@ -127,7 +152,7 @@ async def display_main_page(q):
             title='Example to check',
             type='png',
             image=fig_to_img(visualize_spectograms(q.client.rec_id, q.client.spec_id, q.client.start,
-                                                   q.client.prob)))
+                                                   q.client.prob, show_boxes=False)))
 
         q.page['example_tp'] = ui.image_card(
             box=f'5 3 4 10',
