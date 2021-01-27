@@ -54,7 +54,7 @@ def get_next_candidate(candidates, spec_id, method, tp_selector):
 
 def get_random_positive_example(spec_id):
     tp = get_original_tp()
-    df = tp[tp.species_id == int(spec_id)].sample(n=1)
+    df = tp[tp.species_id == int(spec_id) & (tp.t_min < 58.5)].sample(n=1)
     rec_id = df['recording_id'].values[0]
     start = int(df['t_min'].values[0] - 0.5)
     return rec_id, start, 1.0
@@ -62,7 +62,7 @@ def get_random_positive_example(spec_id):
 
 def get_random_negative_example(spec_id):
     fp = get_original_fp()
-    df = fp[fp.species_id == int(spec_id)].sample(n=1)
+    df = fp[fp.species_id == int(spec_id) & (fp.t_min < 58.5)].sample(n=1)
     rec_id = df['recording_id'].values[0]
     start = int(df['t_min'].values[0] - 0.5)
     return rec_id, start, 0.0
