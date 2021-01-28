@@ -14,9 +14,9 @@ from rainforest.config import HOP_LENGTH, SAMPLE_RATE, N_FFT, CHUNK_SIZE, SPEC_F
 
 AUDIO_PATH = Path('/Users/gfodor/kaggle/rainforest/rfcx/cache/train3')
 DATA_PATH = Path('data')
+ANNOTATION_PATH = Path('annotations')
 
 CANDIDATES_NAME = 'candidates.csv'
-ANNOTATION_NAME = 'ann.csv'
 
 
 def get_candidates():
@@ -31,17 +31,20 @@ def get_original_fp():
     return pd.read_csv(DATA_PATH / 'train_fp.csv')
 
 
-def get_annotations():
-    ann_path = DATA_PATH / ANNOTATION_NAME
+def get_annotations(filename):
+    ann_path = ANNOTATION_PATH / filename
     if ann_path.exists():
-        return pd.read_csv(DATA_PATH / 'candidates.csv')
+        return pd.read_csv(ann_path)
     else:
         return pd.DataFrame(columns=['rec_id', 'start', 'spec_id', 'label'])
 
 
-def get_next_candidate(candidates, spec_id, method, tp_selector):
+def get_next_candidate(candidates, annotations, spec_id, method, tp_selector):
     tp = 1 if tp_selector == 'TP' else 0
     c = candidates[candidates[spec_id] == tp].copy()
+    c = c.merge(annotations[annotations.spec_id == spec_id], how='left', on=['rec_id', 'start'])
+    c = c[c.label.isna()]
+
     if method == 'random':
         c['order'] = np.random.rand(len(c))
     else:
@@ -54,7 +57,7 @@ def get_next_candidate(candidates, spec_id, method, tp_selector):
 
 def get_random_positive_example(spec_id):
     tp = get_original_tp()
-    df = tp[tp.species_id == int(spec_id) & (tp.t_min < 58.5)].sample(n=1)
+    df = tp[(tp.species_id == int(spec_id)) & (tp.t_min < 58.5)].sample(n=1)
     rec_id = df['recording_id'].values[0]
     start = int(df['t_min'].values[0] - 0.5)
     return rec_id, start, 1.0
@@ -62,7 +65,7 @@ def get_random_positive_example(spec_id):
 
 def get_random_negative_example(spec_id):
     fp = get_original_fp()
-    df = fp[fp.species_id == int(spec_id) & (fp.t_min < 58.5)].sample(n=1)
+    df = fp[(fp.species_id == int(spec_id)) & (fp.t_min < 58.5)].sample(n=1)
     rec_id = df['recording_id'].values[0]
     start = int(df['t_min'].values[0] - 0.5)
     return rec_id, start, 0.0

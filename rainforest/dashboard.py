@@ -1,8 +1,10 @@
+from datetime import datetime
+
 from h2o_wave import ui, Q, app, main
 
 from rainforest.config import N_SPECIES
 from rainforest.utils import show_references, get_candidates, get_annotations, visualize_spectograms, \
-    get_next_candidate, fig_to_img, get_random_positive_example, get_random_negative_example
+    get_next_candidate, fig_to_img, get_random_positive_example, get_random_negative_example, ANNOTATION_PATH
 
 _ = main
 
@@ -28,7 +30,7 @@ async def del_cards(q: Q, cards):
 
 def select_new_candidate(q):
     q.client.rec_id, q.client.start, q.client.prob = get_next_candidate(
-        q.client.candidates, q.client.spec_id, q.client.method, q.client.tp_selector)
+        q.client.candidates, q.client.annotations, q.client.spec_id, q.client.method, q.client.tp_selector)
     print('New candidate')
 
 
@@ -38,6 +40,13 @@ def refresh_original_examples(q):
     print('Refresh')
 
 
+def update_annotations(q, label):
+    q.client.annotations = q.client.annotations.append(
+        {'rec_id': q.client.rec_id, 'start': q.client.start, 'spec_id': q.client.spec_id, 'label': label},
+        ignore_index=True)
+    q.client.annotations.to_csv(ANNOTATION_PATH / q.client.filename, index=False)
+
+
 async def display_main_page(q):
     if not q.client.initialized:
         q.client.initialized = True
@@ -45,8 +54,9 @@ async def display_main_page(q):
         q.client.spec_id = '0'
         q.client.method = 'random'
         q.client.tp_selector = 'TP'
+        q.client.filename = f"annotations_{datetime.now().strftime('%Y%m%d-%H%M%S')}.csv"
 
-        q.client.annotations = get_annotations()
+        q.client.annotations = get_annotations(q.client.filename)
         q.client.candidates = get_candidates()
 
         q.page['header'] = ui.header_card(
@@ -64,7 +74,7 @@ async def display_main_page(q):
             ]
         )
         q.client.rec_id, q.client.start, q.client.prob = get_next_candidate(
-            q.client.candidates, q.client.spec_id, q.client.method, q.client.tp_selector)
+            q.client.candidates, q.client.annotations, q.client.spec_id, q.client.method, q.client.tp_selector)
         q.client.pos_rec_id, q.client.pos_start, q.client.pos_prob = get_random_positive_example(q.client.spec_id)
         q.client.neg_rec_id, q.client.neg_start, q.client.neg_prob = get_random_negative_example(q.client.spec_id)
         print('Init')
@@ -72,28 +82,33 @@ async def display_main_page(q):
     if q.args.true_button:
         print('A')
         print(q.client.rec_id, q.client.start, q.client.prob, q.client.spec_id, 'True')
+        update_annotations(q, 1)
         select_new_candidate(q)
-    elif q.args.false_button:
+    if q.args.false_button:
         print('B')
         print(q.client.rec_id, q.client.start, q.client.prob, q.client.spec_id, 'False')
+        update_annotations(q, 0)
         select_new_candidate(q)
-    elif q.args.na_button:
+    if q.args.na_button:
         print('C')
         print(q.client.rec_id, q.client.start, q.client.prob, q.client.spec_id, 'NA')
+        update_annotations(q, -999)
         select_new_candidate(q)
-    elif q.args.refresh_button:
+
+    if q.args.refresh_button:
         print('D')
         refresh_original_examples(q)
-    elif q.args.spec_id:
+
+    if q.args.spec_id and q.client.spec_id != q.args.spec_id:
         print('SPEC')
         q.client.spec_id = q.args.spec_id
         select_new_candidate(q)
         refresh_original_examples(q)
-    elif q.args.method:
+    if q.args.method and q.client.method != q.args.method:
         print('M')
         q.client.method = q.args.method
         select_new_candidate(q)
-    elif q.args.tp_selector:
+    if q.args.tp_selector and q.client.tp_selector != q.args.tp_selector:
         print('TP')
         q.client.tp_selector = q.args.tp_selector
         select_new_candidate(q)
