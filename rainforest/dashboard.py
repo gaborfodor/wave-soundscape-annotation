@@ -77,44 +77,32 @@ async def display_main_page(q):
             q.client.candidates, q.client.annotations, q.client.spec_id, q.client.method, q.client.tp_selector)
         q.client.pos_rec_id, q.client.pos_start, q.client.pos_prob = get_random_positive_example(q.client.spec_id)
         q.client.neg_rec_id, q.client.neg_start, q.client.neg_prob = get_random_negative_example(q.client.spec_id)
-        print('Init')
 
     if q.args.true_button:
-        print('A')
-        print(q.client.rec_id, q.client.start, q.client.prob, q.client.spec_id, 'True')
         update_annotations(q, 1)
         select_new_candidate(q)
     if q.args.false_button:
-        print('B')
-        print(q.client.rec_id, q.client.start, q.client.prob, q.client.spec_id, 'False')
         update_annotations(q, 0)
         select_new_candidate(q)
     if q.args.na_button:
-        print('C')
-        print(q.client.rec_id, q.client.start, q.client.prob, q.client.spec_id, 'NA')
         update_annotations(q, -999)
         select_new_candidate(q)
 
     if q.args.refresh_button:
-        print('D')
         refresh_original_examples(q)
 
     if q.args.spec_id and q.client.spec_id != q.args.spec_id:
-        print('SPEC')
         q.client.spec_id = q.args.spec_id
         select_new_candidate(q)
         refresh_original_examples(q)
     if q.args.method and q.client.method != q.args.method:
-        print('M')
         q.client.method = q.args.method
         select_new_candidate(q)
     if q.args.tp_selector and q.client.tp_selector != q.args.tp_selector:
-        print('TP')
         q.client.tp_selector = q.args.tp_selector
         select_new_candidate(q)
 
     if q.args['#']:
-        print(q.client.current_hash, '->', q.args['#'])
         q.client.current_hash = q.args['#']
 
     if q.client.current_hash == 'references':
