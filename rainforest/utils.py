@@ -12,9 +12,10 @@ from matplotlib import patches
 
 from rainforest.config import HOP_LENGTH, SAMPLE_RATE, N_FFT, CHUNK_SIZE, SPEC_FRANGE, N_MELS, FMAX, FMIN
 
-AUDIO_PATH = Path('/Users/gfodor/kaggle/rainforest/rfcx/cache/train3')
+AUDIO_PATH = Path('/Users/gfodor/kaggle/rainforest/rfcx/cache/train3_best')
 DATA_PATH = Path('data')
 ANNOTATION_PATH = Path('annotations')
+WAV_CACHE_PATH = DATA_PATH / 'audio'
 
 CANDIDATES_NAME = 'candidates.csv'
 

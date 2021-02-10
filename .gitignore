@@ -135,5 +135,6 @@ h2o_wave.state
 *.pth
 *.mp3
 *.flac
+*.wav
 *.html
 dev.conf
