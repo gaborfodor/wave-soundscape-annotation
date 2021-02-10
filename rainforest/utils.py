@@ -14,11 +14,24 @@ from rainforest.config import HOP_LENGTH, SAMPLE_RATE, N_FFT, CHUNK_SIZE, SPEC_F
 
 AUDIO_PATH = Path('/Users/gfodor/kaggle/rainforest/rfcx/cache/train3_best')
 DATA_PATH = Path('data')
+TMP_PATH = Path('tmp')
 ANNOTATION_PATH = Path('annotations')
 WAV_CACHE_PATH = DATA_PATH / 'audio'
 
 CANDIDATES_NAME = 'candidates.csv'
 
+
+AUDIO_TEMPLATE = '''
+<html>
+    <body>
+        <h4>{header}</h4>
+        <audio controls src="{uploaded_audio}">
+            Your browser does not support the <code>audio</code> element.
+        </audio>
+        <img src="{uploaded_image}" width="540" height="720">
+    </body>
+</html>
+'''
 
 def get_candidates():
     return pd.read_csv(DATA_PATH / CANDIDATES_NAME)
@@ -92,7 +105,7 @@ def fig_to_img(fig):
     return image
 
 
-def visualize_spectograms(recording_id, spec_id, start, p, show_boxes=True):
+def visualize_spectograms(recording_id, spec_id, start, p, show_boxes=True, fig_size=(8, 12)):
     original_tp = get_original_tp()
     original_fp = get_original_fp()
     mel_freqs = librosa.mel_frequencies(n_mels=N_MELS, fmin=FMIN, fmax=FMAX).round(0)
@@ -101,7 +114,7 @@ def visualize_spectograms(recording_id, spec_id, start, p, show_boxes=True):
     stft = np.abs(librosa.core.stft(y, n_fft=N_FFT, hop_length=HOP_LENGTH) ** 2)
     stft = librosa.power_to_db(stft, ref=np.max)
 
-    fig, axs = plt.subplots(ncols=1, nrows=2, figsize=(8, 12))
+    fig, axs = plt.subplots(ncols=1, nrows=2, figsize=fig_size)
     ax = axs[0]
     librosa.display.specshow(
         stft, hop_length=HOP_LENGTH, sr=SAMPLE_RATE, y_axis='hz', x_axis='time', cmap=plt.cm.Greys, ax=ax)

@@ -1,10 +1,13 @@
+import os
 from datetime import datetime
+from uuid import uuid4
 
 from h2o_wave import ui, Q, app, main
 
 from rainforest.config import N_SPECIES
 from rainforest.utils import show_references, get_candidates, get_annotations, visualize_spectograms, \
-    get_next_candidate, fig_to_img, get_random_positive_example, get_random_negative_example, ANNOTATION_PATH
+    get_next_candidate, get_random_positive_example, get_random_negative_example, ANNOTATION_PATH, \
+    AUDIO_TEMPLATE, WAV_CACHE_PATH, TMP_PATH
 
 _ = main
 
@@ -45,6 +48,16 @@ def update_annotations(q, label):
         {'rec_id': q.client.rec_id, 'start': q.client.start, 'spec_id': q.client.spec_id, 'label': label},
         ignore_index=True)
     q.client.annotations.to_csv(ANNOTATION_PATH / q.client.filename, index=False)
+
+
+async def show_audio_chunk(q, rec_id, spec_id, start, prob, show_boxes, header):
+    uploaded_audio, = await q.site.upload([WAV_CACHE_PATH / f'{rec_id}_{start}.wav'])
+    fig = visualize_spectograms(rec_id, spec_id, start, prob, show_boxes=show_boxes, fig_size=(8, 12))
+    img_tmp_path = TMP_PATH / f'{uuid4()}.png'
+    fig.savefig(img_tmp_path, dpi=100)
+    uploaded_image, = await q.site.upload([img_tmp_path])
+    os.remove(img_tmp_path)
+    return AUDIO_TEMPLATE.format(header=header, uploaded_audio=uploaded_audio, uploaded_image=uploaded_image)
 
 
 async def display_main_page(q):
@@ -150,23 +163,17 @@ async def display_main_page(q):
 
         )
 
-        q.page['new'] = ui.image_card(
-            box=f'1 3 4 10',
-            title='Example to check',
-            type='png',
-            image=fig_to_img(visualize_spectograms(q.client.rec_id, q.client.spec_id, q.client.start,
-                                                   q.client.prob, show_boxes=False)))
+        new_html = await show_audio_chunk(
+                q, q.client.rec_id, q.client.spec_id, q.client.start, q.client.prob,
+                show_boxes=False, header='Example to check')
+        q.page['new'] = ui.form_card(box='1 3 4 10', items=[ui.markup(new_html)])
 
-        q.page['example_tp'] = ui.image_card(
-            box=f'5 3 4 10',
-            title='Confirmed positive example',
-            type='png',
-            image=fig_to_img(visualize_spectograms(q.client.pos_rec_id, q.client.spec_id, q.client.pos_start,
-                                                   q.client.pos_prob)))
+        tp_html = await show_audio_chunk(
+            q, q.client.pos_rec_id, q.client.spec_id, q.client.pos_start, q.client.pos_prob,
+            show_boxes=True, header='Confirmed positive example')
+        q.page['example_tp'] = ui.form_card(box='5 3 4 10', items=[ui.markup(tp_html)])
 
-        q.page['example_fp'] = ui.image_card(
-            box=f'9 3 4 10',
-            title='Confirmed negative example',
-            type='png',
-            image=fig_to_img(visualize_spectograms(q.client.neg_rec_id, q.client.spec_id, q.client.neg_start,
-                                                   q.client.neg_prob)))
+        fp_html = await show_audio_chunk(
+            q, q.client.neg_rec_id, q.client.spec_id, q.client.neg_start, q.client.neg_prob,
+            show_boxes=True, header='Confirmed negative example')
+        q.page['example_fp'] = ui.form_card(box='9 3 4 10', items=[ui.markup(fp_html)])
