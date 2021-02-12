@@ -8,9 +8,11 @@ import markdown
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import plotly.express as px
 from matplotlib import patches
+from plotly import graph_objects as go, io as pio
 
-from rainforest.config import HOP_LENGTH, SAMPLE_RATE, N_FFT, CHUNK_SIZE, SPEC_FRANGE, N_MELS, FMAX, FMIN
+from rainforest.config import HOP_LENGTH, SAMPLE_RATE, N_FFT, CHUNK_SIZE, SPEC_FRANGE, N_MELS, FMAX, FMIN, N_SPECIES
 
 AUDIO_PATH = Path('/Users/gfodor/kaggle/rainforest/rfcx/cache/train3_best')
 DATA_PATH = Path('data')
@@ -20,8 +22,7 @@ WAV_CACHE_PATH = DATA_PATH / 'audio'
 
 CANDIDATES_NAME = 'candidates.csv'
 
-
-AUDIO_TEMPLATE = '''
+AUDIO_IMG_TEMPLATE = '''
 <html>
     <body>
         <h4>{header}</h4>
@@ -32,6 +33,26 @@ AUDIO_TEMPLATE = '''
     </body>
 </html>
 '''
+
+AUDIO_TEMPLATE = '''
+<html>
+    <body>
+        <h4>{header}</h4>
+        <audio controls src="{uploaded_audio}">
+            Your browser does not support the <code>audio</code> element.
+        </audio>
+    </body>
+</html>
+'''
+
+IMAGE_TEMPLATE = '''
+<html>
+    <body>
+        <img src="{uploaded_image}" width="100%" height="100%">
+    </body>
+</html>
+'''
+
 
 def get_candidates():
     return pd.read_csv(DATA_PATH / CANDIDATES_NAME)
@@ -103,6 +124,69 @@ def fig_to_img(fig):
     image = base64.b64encode(buf.read()).decode('utf-8')
     plt.close(fig)
     return image
+
+
+def read_audio_fast(path):
+    y, _ = librosa.load(path, sr=SAMPLE_RATE, mono=True, res_type="kaiser_fast")
+    return y
+
+
+def mel_spectrogram(y, fig_size=(12, 8)):
+    mel_freqs = librosa.mel_frequencies(n_mels=N_MELS, fmin=FMIN, fmax=FMAX).round(0)
+    y_ticks = np.arange(0, N_MELS, N_MELS // 8)
+    fig, ax = plt.subplots(figsize=fig_size)
+    mel = librosa.feature.melspectrogram(
+        y=y, n_fft=N_FFT, hop_length=HOP_LENGTH, n_mels=N_MELS, sr=SAMPLE_RATE, fmin=FMIN, fmax=FMAX)
+    mel = librosa.power_to_db(mel, ref=np.max)
+    ax.imshow(mel, cmap=plt.cm.Greys, origin='lower', interpolation='nearest', aspect='auto')
+
+    ax.grid()
+    ax.set_ylabel('Mel scale')
+    ax.set_yticks(y_ticks)
+    ax.set_yticklabels([int(mel_freqs[i]) for i in y_ticks])
+    plt.tight_layout()
+    return fig
+
+
+def max_probability_bar_plot(preds, dx, dy):
+    max_prob = preds[preds.columns[:-1]].max()
+    fig = go.Figure(go.Bar(
+        x=max_prob.values,
+        y=max_prob.index,
+        marker=dict(color='#FEE200'),
+        marker_line_color='black',
+        orientation='h'))
+    _ = fig.update_layout(
+        xaxis=dict(showgrid=False, visible=False),
+        yaxis=dict(tickmode='array', tickvals=np.arange(N_SPECIES)),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        width=dx * 134 - 10,
+        height=dy * 76 - 10,
+        margin=dict(l=0, r=0, t=0, b=0)
+    )
+    config = {'scrollZoom': False, 'showLink': False, 'displayModeBar': False}
+    return pio.to_html(fig, validate=False, include_plotlyjs='cdn', config=config)
+
+
+def framewise_probability_plot(preds, dx, dy):
+    fig = px.imshow(
+        preds.values[:, :N_SPECIES].round(3).T,
+        labels=dict(x="Time", y="Species", color="Probability"),
+        origin='lower',
+        aspect='auto',
+        color_continuous_scale=px.colors.sequential.Cividis)
+    _ = fig.update_layout(
+        yaxis=dict(tickmode='array', tickvals=np.arange(N_SPECIES)),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        width=dx * 134 - 10,
+        height=dy * 76 - 10,
+        margin=dict(l=0, r=0, t=0, b=0)
+    )
+    _ = fig.update(layout_coloraxis_showscale=False)
+    config = {'scrollZoom': False, 'showLink': False, 'displayModeBar': False}
+    return pio.to_html(fig, validate=False, include_plotlyjs='cdn', config=config)
 
 
 def visualize_spectograms(recording_id, spec_id, start, p, show_boxes=True, fig_size=(8, 12)):
