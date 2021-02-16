@@ -225,4 +225,14 @@ def get_model_predictions_for_clip(y, model):
     test_preds = preds.cpu().numpy()
     pred_df = pd.DataFrame(test_preds, columns=range(N_SPECIES))
     pred_df['start_second'] = start_seconds
+
+    # Smooth predictions
+    pred_df = pred_df.append(
+        pd.DataFrame([
+            [np.nan] * N_SPECIES + [pred_df.start_second.max() + 1],
+            [np.nan] * N_SPECIES + [pred_df.start_second.max() + 2],
+        ], columns=pred_df.columns)
+    ).fillna(method='ffill')
+    pred_df = pred_df.set_index('start_second').rolling(window=3, min_periods=1).mean()
+
     return pred_df
