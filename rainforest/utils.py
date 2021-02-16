@@ -153,7 +153,7 @@ def max_probability_bar_plot(preds, dx, dy):
     fig = go.Figure(go.Bar(
         x=max_prob.values,
         y=max_prob.index,
-        marker=dict(color='#FEE200'),
+        marker=dict(color='#001F45'),
         marker_line_color='black',
         orientation='h'))
     _ = fig.update_layout(
@@ -175,16 +175,19 @@ def framewise_probability_plot(preds, dx, dy):
         labels=dict(x="Time", y="Species", color="Probability"),
         origin='lower',
         aspect='auto',
-        color_continuous_scale=px.colors.sequential.Cividis)
+        width=dx * 145,
+        height=dy * 76 - 10,
+        color_continuous_scale=px.colors.sequential.Cividis,
+        # color_continuous_scale=['black', 'yellow', 'white'],
+    )
+    _ = fig.update(layout_coloraxis_showscale=False)
     _ = fig.update_layout(
         yaxis=dict(tickmode='array', tickvals=np.arange(N_SPECIES)),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        width=dx * 134 - 10,
-        height=dy * 76 - 10,
         margin=dict(l=0, r=0, t=0, b=0)
     )
-    _ = fig.update(layout_coloraxis_showscale=False)
+
     config = {'scrollZoom': False, 'showLink': False, 'displayModeBar': False}
     return pio.to_html(fig, validate=False, include_plotlyjs='cdn', config=config)
 

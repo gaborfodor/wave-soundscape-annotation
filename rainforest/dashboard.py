@@ -84,10 +84,11 @@ async def show_recognize_dashboard(q: Q, audio_path, uploaded, example=True):
         ]
     )
     if example:
+        # preds = get_model_predictions_for_clip(y, q.app.model)
+        # preds.to_csv('./data/example_preds.csv', index=False)
         preds = pd.read_csv('./data/example_preds.csv')
     else:
         preds = get_model_predictions_for_clip(y, q.app.model)
-        # preds.to_csv('./data/example_preds.csv', index=False)
 
     q.page['clipwise_predictions'] = ui.frame_card(
         box='1 5 3 7',
@@ -101,12 +102,17 @@ async def show_recognize_dashboard(q: Q, audio_path, uploaded, example=True):
         content=framewise_probability_plot(preds, 20, 4)
     )
 
-    fig = mel_spectrogram(y, fig_size=(26, 4.5))
-    example_mel_path = './data/example_mel.png'
-    fig.savefig(example_mel_path, dpi=100)
-    uploaded_image, = await q.site.upload([example_mel_path])
-
-
+    if example:
+        # fig = mel_spectrogram(y, fig_size=(26, 4.5))
+        example_mel_path = './data/example_mel.png'
+        # fig.savefig(example_mel_path, dpi=100)
+        uploaded_image, = await q.site.upload([example_mel_path])
+    else:
+        fig = mel_spectrogram(y, fig_size=(26, 4.5))
+        img_tmp_path = TMP_PATH / f'{uuid4()}.png'
+        fig.savefig(img_tmp_path, dpi=100)
+        uploaded_image, = await q.site.upload([img_tmp_path])
+        os.remove(img_tmp_path)
 
     q.page['mel_spectrogram'] = ui.form_card(
         box='4 2 20 6',
@@ -205,7 +211,7 @@ async def display_main_page(q):
             await del_cards(q, ['upload'])
             await add_progress(q)
             uploaded = q.args.audio_upload[0]
-            audio_path = await q.site.download(uploaded, './temp/')
+            audio_path = await q.site.download(uploaded, './tmp/')
             await show_recognize_dashboard(q, audio_path, uploaded, example=False)
 
     if q.client.current_hash == 'annotate':
