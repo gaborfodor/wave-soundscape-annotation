@@ -14,7 +14,6 @@ from plotly import graph_objects as go, io as pio
 
 from rainforest.config import HOP_LENGTH, SAMPLE_RATE, N_FFT, CHUNK_SIZE, SPEC_FRANGE, N_MELS, FMAX, FMIN, N_SPECIES
 
-AUDIO_PATH = Path('/Users/gfodor/kaggle/rainforest/rfcx/cache/train3_best')
 DATA_PATH = Path('data')
 TMP_PATH = Path('tmp')
 ANNOTATION_PATH = Path('annotations')
@@ -113,10 +112,6 @@ def show_references():
     return html
 
 
-def get_chunk(rec_id, start):
-    return np.load(AUDIO_PATH / f'{rec_id}_{start}.npy')
-
-
 def fig_to_img(fig):
     buf = io.BytesIO()
     fig.savefig(buf, format='png')
@@ -129,6 +124,11 @@ def fig_to_img(fig):
 def read_audio_fast(path):
     y, _ = librosa.load(path, sr=SAMPLE_RATE, mono=True, res_type="kaiser_fast")
     return y
+
+
+def get_chunk(rec_id, start):
+    filename = WAV_CACHE_PATH / f'{rec_id}_{start}.wav'
+    return read_audio_fast(filename)
 
 
 def mel_spectrogram(y, fig_size=(12, 8)):
