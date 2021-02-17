@@ -1,4 +1,4 @@
-# wave-soundscape-annotation
+![](static/logo.png)
 
 ## Setup
 Clone the repo and create python environment with the required dependencies.
