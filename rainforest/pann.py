@@ -188,7 +188,7 @@ def my_cnn14():
 def load_pretrained_model():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = my_cnn14()
-    model_path = './data/temp_model_GPU0.pth'
+    model_path = './data/temp_model_GPU2.pth'
     if not os.path.exists(model_path):
         print('Downloading model')
         urllib.request.urlretrieve(MODEL_URI, model_path)

@@ -203,7 +203,7 @@ async def display_main_page(q):
         if q.args.example_audio:
             await del_cards(q, ['upload'])
             await add_progress(q)
-            audio_path = './data/4d54e38a8.flac'
+            audio_path = './data/f97ababc1.flac'
             uploaded, = await q.site.upload([audio_path])
             await show_recognize_dashboard(q, audio_path, uploaded, example=True)
 
