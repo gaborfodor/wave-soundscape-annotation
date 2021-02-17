@@ -138,3 +138,4 @@ h2o_wave.state
 *.wav
 *.html
 dev.conf
+*.mov
