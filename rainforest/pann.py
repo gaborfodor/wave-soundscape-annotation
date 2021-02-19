@@ -12,7 +12,7 @@ from torchlibrosa.stft import Spectrogram, LogmelFilterBank
 
 from rainforest.config import SAMPLE_RATE, N_FFT, N_MELS, FMIN, FMAX, HOP_LENGTH, N_SPECIES, CHUNK_SIZE
 
-MODEL_URI = 'TODO'
+MODEL_URI = 'https://storage.googleapis.com/birds-external-data/temp_model_GPU2.pth'
 
 
 def init_layer(layer):

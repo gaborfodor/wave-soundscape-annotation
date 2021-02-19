@@ -12,7 +12,7 @@ pip install -r requirements.txt
 Download & extract [Wave](https://github.com/h2oai/wave/releases/tag/v0.11.0)
 
 
-Download the required audio chunks and pretrained model from kaggle.
+**Optional** Download  all the required audio chunks and pretrained model from kaggle.
 ```
 kaggle datasets download gaborfodor/rainforestexampleaudiochunks
 mv rainforestexampleaudiochunks.zip data/

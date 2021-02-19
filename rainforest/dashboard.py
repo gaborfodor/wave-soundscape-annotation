@@ -9,8 +9,8 @@ from rainforest.config import N_SPECIES
 from rainforest.pann import load_pretrained_model, get_model_predictions_for_clip
 from rainforest.utils import show_references, get_candidates, get_annotations, visualize_spectograms, \
     get_next_candidate, get_random_positive_example, get_random_negative_example, ANNOTATION_PATH, \
-    AUDIO_IMG_TEMPLATE, WAV_CACHE_PATH, TMP_PATH, read_audio_fast, max_probability_bar_plot, AUDIO_TEMPLATE, \
-    mel_spectrogram, IMAGE_TEMPLATE, framewise_probability_plot
+    AUDIO_IMG_TEMPLATE, TMP_PATH, read_audio_fast, max_probability_bar_plot, AUDIO_TEMPLATE, \
+    mel_spectrogram, IMAGE_TEMPLATE, framewise_probability_plot, CHUNK_URI
 
 _ = main
 
@@ -63,13 +63,15 @@ async def add_progress(q: Q):
 
 
 async def show_audio_chunk(q, rec_id, spec_id, start, prob, show_boxes, header):
-    uploaded_audio, = await q.site.upload([WAV_CACHE_PATH / f'{rec_id}_{start}.wav'])
     fig = visualize_spectograms(rec_id, spec_id, start, prob, show_boxes=show_boxes, fig_size=(8, 12))
     img_tmp_path = TMP_PATH / f'{uuid4()}.png'
     fig.savefig(img_tmp_path, dpi=100)
     uploaded_image, = await q.site.upload([img_tmp_path])
     os.remove(img_tmp_path)
-    return AUDIO_IMG_TEMPLATE.format(header=header, uploaded_audio=uploaded_audio, uploaded_image=uploaded_image)
+    return AUDIO_IMG_TEMPLATE.format(
+        header=header,
+        uploaded_audio=CHUNK_URI.format(rec_id=rec_id, start=start),
+        uploaded_image=uploaded_image)
 
 
 async def show_recognize_dashboard(q: Q, audio_path, uploaded, example=True):

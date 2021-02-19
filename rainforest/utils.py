@@ -1,5 +1,6 @@
 import base64
 import io
+import urllib.request
 from pathlib import Path
 
 import librosa
@@ -17,7 +18,8 @@ from rainforest.config import HOP_LENGTH, SAMPLE_RATE, N_FFT, CHUNK_SIZE, SPEC_F
 DATA_PATH = Path('data')
 TMP_PATH = Path('tmp')
 ANNOTATION_PATH = Path('annotations')
-WAV_CACHE_PATH = DATA_PATH / 'audio'
+WAV_CACHE_PATH = DATA_PATH / 'rainforest_chunks'
+CHUNK_URI = 'https://storage.googleapis.com/birds-external-data/rainforest_chunks/{rec_id}_{start}.wav'
 
 CANDIDATES_NAME = 'candidates.csv'
 
@@ -128,6 +130,8 @@ def read_audio_fast(path):
 
 def get_chunk(rec_id, start):
     filename = WAV_CACHE_PATH / f'{rec_id}_{start}.wav'
+    if not filename.exists():
+        urllib.request.urlretrieve(CHUNK_URI.format(rec_id=rec_id, start=start), filename)
     return read_audio_fast(filename)
 
 
