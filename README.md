@@ -1,4 +1,4 @@
-![](static/logo.png)
+![](static/icon.png)
 
 ## Setup
 Clone the repo and create python environment with the required dependencies.
