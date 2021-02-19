@@ -1,0 +1,15 @@
+[App]
+Name = "ai.h2o.wave.rainforest"
+Version = "0.0.4"
+Title = "Rainforest Soundscapes"
+Description = "Annotate bird and frog species in tropical soundscapes"
+Category = "Other"
+Keywords = ["audio", "nature"]
+LongDescription = "about.md"
+
+[Runtime]
+Module = "rainforest.dashboard"
+VolumeMount = "/data"
+VolumeSize = "6Gi"
+MemoryLimit = "6Gi"
+MemoryReservation = "4Gi"
